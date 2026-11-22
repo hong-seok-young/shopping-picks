@@ -246,10 +246,34 @@ document.getElementById("items").innerHTML=DATA.map(d=>{
      <div class="meta"><span><b>${esc(d.price)}</b></span><span>후기 ${esc(d.rc)}개</span><span>${esc(d.mat)}</span></div></div>
      <a class="go" href="${esc(d.url)}" target="_blank" rel="noopener">무신사에서 보기 →</a></div>
    <div class="photo${d.mixed?" mixed":""}"><b>착용 사진 확인</b> ${esc(d.photo)}</div>
+   <div class="galhead"></div><div class="gal"></div>
    <div class="firm"><div class="track"><div class="g" style="width:${d.f/tot*100}%"></div><div class="b" style="width:${d.s/tot*100}%"></div></div>
      <div class="legend"><span>탄탄 <b>${d.f}</b></span><span>흐물 <b>${d.s}</b></span><span>두꺼움 <b>${d.t}</b></span><span>후기 ${d.n}개 기준</span></div></div>
    <div><div class="brand">실측 · ${esc(d.size)} (cm) · ${esc(d.big)}</div><div class="specs">${sp}</div></div>
    <div class="note">${d.note}</div>
    ${d.q.length?`<ul class="rev">${d.q.map(([hw,o,t])=>`<li><div class="rtop"><span class="body">${esc(hw)}</span><span class="opt">${esc(o)}</span></div><p>${esc(t)}</p></li>`).join("")}</ul>`:""}
   </section>`}).join("");
+// 착샷: 190/98에 가까운 순. 키·몸무게 차이가 작을수록 앞(초록 = 키 ±3, 몸무게 ±5 안).
+fetch("photos.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(idx=>{
+  document.querySelectorAll("section.item").forEach(sec=>{
+    const list=(idx[sec.dataset.g]||[]).slice().sort((a,b)=>(Math.abs(a.h-190)+0.8*Math.abs(a.w-98))-(Math.abs(b.h-190)+0.8*Math.abs(b.w-98)));
+    const head=sec.querySelector(".galhead"), gal=sec.querySelector(".gal");
+    if(!list.length){head.textContent="비슷한 체형 착샷: 정리 중";head.classList.add("none");return;}
+    head.textContent=`비슷한 체형 착샷 ${list.length}장 · 190/98에 가까운 순 · 누르면 크게 보여요`;
+    gal.innerHTML=list.map((p,i)=>{const close=Math.abs(p.h-190)<=3&&Math.abs(p.w-98)<=5;
+      return `<button type="button" data-i="${i}"><img src="${esc(p.file)}" alt="${esc(p.h+"cm "+p.w+"kg "+p.o+" 착용 후기 사진")}" loading="lazy"><span class="${close?"close":""}">${esc(p.h+"/"+p.w)} · ${esc(p.o)}</span></button>`}).join("");
+    gal.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>openLb(list,+b.dataset.i)));
+  });
+});
+// 크게 보기: 페이지 안에서 띄움. ←/→ 넘기기, Esc·바깥 클릭으로 닫기.
+const lb=document.createElement("div");lb.className="lb";lb.setAttribute("role","dialog");lb.setAttribute("aria-modal","true");
+lb.innerHTML=`<img alt=""><div class="cap"></div><div class="nav"><button type="button" data-d="-1">← 이전</button><button type="button" data-x>닫기</button><button type="button" data-d="1">다음 →</button></div>`;
+document.body.appendChild(lb);
+let cur=null,ci=0;
+function showLb(){const p=cur[ci];const im=lb.querySelector("img");im.src=p.file;im.alt=p.h+"cm "+p.w+"kg "+p.o+" 착용 후기 사진";
+  lb.querySelector(".cap").innerHTML=`<b>${esc(p.h+"/"+p.w+" · "+p.o)}</b>${esc(p.c||"")} <span style="opacity:.6">(${ci+1}/${cur.length})</span>`;}
+function openLb(list,i){cur=list;ci=i;showLb();lb.classList.add("on");lb.querySelector("[data-x]").focus();}
+function closeLb(){lb.classList.remove("on");}
+lb.addEventListener("click",e=>{const t=e.target;if(t===lb||t.hasAttribute("data-x"))closeLb();else if(t.dataset.d){ci=(ci+ +t.dataset.d+cur.length)%cur.length;showLb();}});
+document.addEventListener("keydown",e=>{if(!lb.classList.contains("on"))return;if(e.key==="Escape")closeLb();if(e.key==="ArrowRight"){ci=(ci+1)%cur.length;showLb();}if(e.key==="ArrowLeft"){ci=(ci-1+cur.length)%cur.length;showLb();}});
 </script>

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>브랜디드 vs 트래드클럽</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one column. Verdict cards for the two finalists (size pick, size table with sleeve estimate), then every 185cm+ review per product with all photos; in-page lightbox. */
+:root{
+  --bg:#eef0f3; --surface:#ffffff; --fg:#1b2030; --muted:#5d6577; --line:#d6dae2;
+  --accent:#2e3f6e; --accent-soft:#e1e6f2; --good:#2f7a4f; --warn:#a2611a; --bad:#a23b3b;
+  --display:"IBM Plex Sans KR","Noto Sans KR",system-ui,sans-serif;
+  --body:"Noto Sans KR",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12151c; --surface:#1b1f29; --fg:#e6e9f0; --muted:#9aa2b4; --line:#2c3240;
+  --accent:#9db0e6; --accent-soft:#262f47; --good:#6cc493; --warn:#e2a35c; --bad:#e88080; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151c; --surface:#1b1f29; --fg:#e6e9f0; --muted:#9aa2b4; --line:#2c3240;
+  --accent:#9db0e6; --accent-soft:#262f47; --good:#6cc493; --warn:#e2a35c; --bad:#e88080; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 56px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.3}
+h1{font-size:1.7rem} h2{font-size:1.25rem} h3{font-size:1rem}
+.sub{color:var(--muted);margin:6px 0 0}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0}
+.tabs a{font-weight:700;font-size:.9rem;text-decoration:none;color:var(--accent);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 12px}
+.tabs a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section.prod{display:flex;flex-direction:column;gap:14px;scroll-margin-top:56px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.brand{font-size:.8rem;color:var(--muted);letter-spacing:.03em}
+.meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.88rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.meta b{color:var(--fg)}
+a.go{display:inline-flex;align-items:center;font-weight:700;font-size:.9rem;color:var(--surface);background:var(--accent);text-decoration:none;padding:8px 14px;border-radius:8px;white-space:nowrap}
+a.go:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.pick{border-left:4px solid var(--good);background:var(--accent-soft);border-radius:8px;padding:10px 14px;font-size:.93rem}
+.pick b{color:var(--good)}
+.warn{border-left:4px solid var(--warn);background:var(--accent-soft);border-radius:8px;padding:10px 14px;font-size:.9rem}
+.warn b{color:var(--warn)}
+table{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.75rem;color:var(--muted);font-weight:500}
+tr.rec td{font-weight:700;background:var(--accent-soft)}
+td.ok{color:var(--good)} td.short{color:var(--bad)}
+.tblwrap{overflow-x:auto}
+.revhead{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 12px}
+.revhead span{font-size:.82rem;color:var(--muted)}
+ul.revs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+ul.revs li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.rtop{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.8rem;color:var(--muted);align-items:baseline}
+.rtop .hw{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:500}
+.rtop .opt{color:var(--fg);font-weight:700}
+.rtop .flag{color:var(--warn);font-weight:700}
+ul.revs p{margin:0;font-size:.92rem;overflow-wrap:anywhere}
+mark{background:transparent;color:var(--good);font-weight:700}
+.ph{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.ph button{flex:0 0 auto;border:0;padding:0;background:none;cursor:zoom-in;border-radius:8px}
+.ph img{width:120px;height:160px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block;background:var(--accent-soft)}
+.ph button:focus-visible img{outline:2px solid var(--accent);outline-offset:2px}
+.lb{position:fixed;inset:0;z-index:50;background:rgba(10,12,18,.92);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px}
+.lb.on{display:flex}
+.lb img{max-width:100%;max-height:calc(100dvh - 140px);object-fit:contain;border-radius:8px}
+.lb .cap{color:#e6e9f0;font-size:.9rem;max-width:640px;text-align:center}
+.lb .cap b{font-family:var(--mono);color:#9db0e6;margin-right:8px}
+.lb .nav{display:flex;gap:10px}
+.lb .nav button{font:inherit;font-weight:700;background:#262f47;color:#e6e9f0;border:1px solid #3a4562;border-radius:8px;padding:8px 16px;cursor:pointer}
+.lb .nav button:focus-visible{outline:2px solid #9db0e6;outline-offset:2px}
+footer{font-size:.8rem;color:var(--muted)}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>브랜디드 vs 트래드클럽</h1>
+    <p class="sub">두 상품 모두 키 185 이상 구매자의 후기를 글·사진 상관없이 전부 모았어요. 색상별 상품 후기까지 합쳤어요. 사진을 누르면 크게 보여요.</p>
+  </header>
+
+  <nav class="tabs" aria-label="상품 바로가기"><a href="#branded">브랜디드 CHAIN HEAVY WOOL</a><a href="#trad">트래드클럽 케이블 니트</a><a href="#trad-sizes">트래드 3XL·4XL·5XL 사진</a></nav>
+
+  <section class="prod" id="branded">
+    <div class="card">
+      <div class="head"><div><div class="brand">브랜디드</div><h2>CHAIN HEAVY WOOL SWEATER</h2>
+        <div class="meta"><span><b>134,100원</b></span><span>울 80% · 나일론 20% · 5게이지</span><span>후기 102개 중 185cm 이상 13개</span></div></div>
+        <a class="go" href="https://www.musinsa.com/products/4649663" target="_blank" rel="noopener">블랙 보기 →</a></div>
+      <div class="pick"><b>추천 사이즈 XXL</b>
+        <ul style="margin:4px 0 0;padding-left:1.2em">
+          <li>190/90이 XXL을 입고 "기장감, 핏 모두 훌륭하다"고 했어요.</li>
+          <li>187/89·186/87도 XXL을 입고 "세미오버~적당한 오버핏"이라고 했어요.</li>
+          <li>98kg이면 XXL이 세미오버보다 조금 붙는 정도일 거예요. 가장 큰 사이즈가 XXL이라 한 치수 다운은 생각하지 않아도 돼요.</li>
+        </ul>
+      </div>
+      <div class="tblwrap"><table>
+        <thead><tr><th>사이즈</th><th>총장</th><th>어깨</th><th>가슴</th><th>소매</th><th>환산 소매</th></tr></thead>
+        <tbody>
+          <tr><td>XL</td><td>69</td><td>53.5</td><td>63.5</td><td>63</td><td class="ok">79.8</td></tr>
+          <tr class="rec"><td>XXL ← 추천</td><td>70</td><td>55.5</td><td>65.5</td><td>64</td><td class="ok">81.8</td></tr>
+        </tbody></table></div>
+      <div class="warn"><b>주의</b>
+        <ul style="margin:4px 0 0;padding-left:1.2em">
+          <li>긴 후기 2개(186/87, 187/89)는 체험단 후기예요. 한 명은 본문에 직접 밝혔고, 다른 한 명은 문체로 보아 체험단으로 보여요.</li>
+          <li>키 185 이상이 소매 길이를 따로 언급한 후기는 없어요. 환산 81.8은 나인제트(78.5)보다 3cm쯤 길어요.</li>
+          <li>블랙 재고는 상품 페이지에서 확인이 필요해요. "다른 색이 품절"이라는 후기가 있었어요.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="revhead"><h3>키 185 이상 후기 전부</h3><span id="cnt-branded"></span></div>
+    <ul class="revs" id="rev-4649748"></ul>
+  </section>
+
+  <section class="prod" id="trad">
+    <div class="card">
+      <div class="head"><div><div class="brand">트래드클럽</div><h2>케이블 니트 (5컬러)</h2>
+        <div class="meta"><span><b>56,050원</b></span><span>아크릴 43% · 폴리 30% · 나일론 등</span><span>후기 46개 중 185cm 이상 7개</span></div></div>
+        <a class="go" href="https://www.musinsa.com/products/4369954" target="_blank" rel="noopener">상품 보기 →</a></div>
+      <div class="pick"><b>추천 사이즈 2XL (오버핏으로 입으려면 3XL)</b>
+        <ul style="margin:4px 0 0;padding-left:1.2em">
+          <li>몸무게가 같은 180/98이 3XL을 입고 "<b>생각보다 많이 루즈해서 평소 사이즈 추천</b>"이라고 했어요.</li>
+          <li>187/85는 4XL을 입고 "생각보다 커서 2XL~3XL을 추천한다"고 했어요.</li>
+          <li>192/100은 5XL을 입고 "<b>팔이 긴 편인데도 소매가 조금 길다</b>"고 했어요.</li>
+          <li>2XL도 환산 소매가 81.5라서 나인제트보다 3cm 길어요. 소매를 확실히 길게 입으려면 3XL(83.5)이에요.</li>
+          <li>3XL부터는 어깨 봉제선이 위팔로 내려가는 오버핏이에요. 어깨선이 살아 있는 쪽은 2XL이에요.</li>
+        </ul>
+      </div>
+      <div class="tblwrap"><table>
+        <thead><tr><th>사이즈</th><th>총장</th><th>어깨</th><th>가슴</th><th>소매</th><th>환산 소매</th></tr></thead>
+        <tbody>
+          <tr class="rec"><td>2XL ← 추천</td><td>70</td><td>53</td><td>63</td><td>65</td><td class="ok">81.5</td></tr>
+          <tr><td>3XL (오버핏)</td><td>72</td><td>55</td><td>66</td><td>66</td><td class="ok">83.5</td></tr>
+          <tr><td>4XL</td><td>74</td><td>57</td><td>69</td><td>66</td><td class="ok">84.5</td></tr>
+          <tr><td>5XL</td><td>76</td><td>59</td><td>72</td><td>66</td><td class="ok">85.5</td></tr>
+        </tbody></table></div>
+      <div class="warn"><b>주의</b>
+        <ul style="margin:4px 0 0;padding-left:1.2em">
+          <li>아크릴 혼방이라 울 니트만큼 탄탄할지는 확인하지 못했어요.</li>
+          <li>187/85는 "두께감이 있어서 어깨 체형 보정이 된다"고 했어요.</li>
+          <li>5XL 구매자 대부분은 100~110kg예요.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="revhead"><h3>키 185 이상 후기 전부</h3><span id="cnt-trad"></span></div>
+    <ul class="revs" id="rev-4369954"></ul>
+
+    <div class="revhead" id="trad-sizes" style="scroll-margin-top:56px;margin-top:10px"><h3>3XL · 4XL · 5XL 사진 후기 전부 (키 무관)</h3><span>사진 후기 32개 중 해당 사이즈만</span></div>
+    <div class="warn"><b>사이즈 판단에 중요한 후기</b>
+      <ul style="margin:4px 0 0;padding-left:1.2em">
+        <li><b>180/98 (3XL)</b>: "생각보다 많이 루즈해서 평소 사이즈 추천". 몸무게가 같은 구매자예요. 사진은 접어 둔 것 한 장뿐이에요.</li>
+        <li><b>187/85 (4XL)</b>: "생각보다 큰 편, 2XL~3XL 추천"</li>
+        <li><b>192/100 (5XL)</b>: "몸에 맞는 사이즈, 팔이 긴데도 소매가 조금 길다"</li>
+        <li><b>181/85 (3XL)</b>: 사진에서 어깨 봉제선이 위팔까지 내려오고 소매가 손등을 덮는 오버핏이에요. 체험단 후기예요.</li>
+      </ul>
+    </div>
+    <div id="sizegroups"></div>
+  </section>
+
+  <footer>후기 기준일 2026-11-22. 같은 사람이 색상별로 같은 글을 올린 후기는 하나로 합쳤어요. 원본 데이터: Documents\쇼핑 저장소 data/final/, photos/final/.</footer>
+</div>
+
+<script>
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const HL=/(소매[^.!?。]*|팔이[^.!?。]*|기장[^.!?。]*|총장[^.!?。]*|오버핏|세미오버|정핏|사이즈 다운|한사이즈 다운|체형 ?보[정완])/g;
+const SPONSOR=new Set([70978322,70988055]);
+const lb=document.createElement("div");lb.className="lb";lb.setAttribute("role","dialog");lb.setAttribute("aria-modal","true");
+lb.innerHTML=`<img alt=""><div class="cap"></div><div class="nav"><button type="button" data-d="-1">← 이전</button><button type="button" data-x>닫기</button><button type="button" data-d="1">다음 →</button></div>`;
+document.body.appendChild(lb);
+let cur=[],ci=0;
+function show(){const p=cur[ci];const im=lb.querySelector("img");im.src=p.f;im.alt=p.cap+" 후기 사진";lb.querySelector(".cap").innerHTML=`<b>${esc(p.cap)}</b><span style="opacity:.6">${ci+1}/${cur.length}</span>`;}
+function open(list,i){cur=list;ci=i;show();lb.classList.add("on");lb.querySelector("[data-x]").focus();}
+lb.addEventListener("click",e=>{const t=e.target;if(t===lb||t.hasAttribute("data-x"))lb.classList.remove("on");else if(t.dataset.d){ci=(ci+ +t.dataset.d+cur.length)%cur.length;show();}});
+document.addEventListener("keydown",e=>{if(!lb.classList.contains("on"))return;if(e.key==="Escape")lb.classList.remove("on");if(e.key==="ArrowRight"){ci=(ci+1)%cur.length;show();}if(e.key==="ArrowLeft"){ci=(ci-1+cur.length)%cur.length;show();}});
+
+fetch("final-reviews.json").then(r=>r.json()).then(data=>{
+  for(const [g,list] of Object.entries(data)){
+    // 같은 사람(키/몸무게/본문 같음)이 색상별로 올린 후기는 합치고 사진은 모음
+    const merged=[];const key=r=>r.h+"/"+r.w+"|"+r.c;
+    for(const r of list){const m=merged.find(x=>key(x)===key(r));if(m){m.files.push(...r.files);m.opts.add(r.o);}else merged.push({...r,files:[...r.files],opts:new Set([r.o])});}
+    merged.sort((a,b)=>(Math.abs(a.h-190)+0.8*Math.abs(a.w-98))-(Math.abs(b.h-190)+0.8*Math.abs(b.w-98)));
+    const allPh=[];merged.forEach(r=>r.files.forEach(f=>allPh.push({f,cap:`${r.h}/${r.w} · ${[...r.opts].join(", ")}`})));
+    document.getElementById(g==="4649748"?"cnt-branded":"cnt-trad").textContent=`${merged.length}명 · 사진 ${allPh.length}장 · 190/98에 가까운 순`;
+    const ul=document.getElementById("rev-"+g);
+    ul.innerHTML=merged.map(r=>{
+      const body=esc(r.c).replace(HL,m=>`<mark>${m}</mark>`);
+      const ph=r.files.map(f=>`<button type="button" data-f="${esc(f)}"><img src="${esc(f)}" alt="${esc(r.h+"cm "+r.w+"kg 착용 후기 사진")}" loading="lazy"></button>`).join("");
+      return `<li><div class="rtop"><span class="hw">${r.h}/${r.w}</span><span class="opt">${esc([...r.opts].join(", "))}</span><span>${"★".repeat(r.gr||0)}</span><span>${esc(r.d)}</span>${SPONSOR.has(r.no)?'<span class="flag">체험단</span>':""}</div>
+        <p>${body}</p>${ph?`<div class="ph">${ph}</div>`:""}</li>`}).join("");
+    ul.querySelectorAll(".ph button").forEach(b=>b.addEventListener("click",()=>{const i=allPh.findIndex(p=>p.f===b.dataset.f);open(allPh,i);}));
+  }
+});
+// 트래드클럽 사이즈별(3XL/4XL/5XL) 사진 후기
+const SPONSOR2=new Set([66915865,66646419]);
+fetch("trad-sizes.json").then(r=>r.json()).then(list=>{
+  const box=document.getElementById("sizegroups");
+  box.innerHTML=["3XL","4XL","5XL"].map(sz=>{
+    const rs=list.filter(r=>r.sz===sz).sort((a,b)=>b.h-a.h||b.w-a.w);
+    return `<div class="revhead" style="margin-top:14px"><h3>${sz}</h3><span>${rs.length}명 · 사진 ${rs.reduce((a,r)=>a+r.files.length,0)}장</span></div>
+    <ul class="revs" data-sz="${sz}">${rs.map(r=>`<li><div class="rtop"><span class="hw">${r.h}/${r.w}</span><span class="opt">${esc(r.o)}</span>${r.sex==="남성"?"":`<span>${esc(r.sex||"성별 미표시")}</span>`}${SPONSOR2.has(r.no)?'<span class="flag">체험단</span>':""}</div>
+      <p>${esc(r.c).replace(HL,m=>`<mark>${m}</mark>`)}</p>
+      <div class="ph">${r.files.map(f=>`<button type="button" data-f="${esc(f)}"><img src="${esc(f)}" alt="${esc(r.h+"cm "+r.w+"kg "+sz+" 착용 후기 사진")}" loading="lazy"></button>`).join("")}</div></li>`).join("")}</ul>`}).join("");
+  box.querySelectorAll("ul.revs").forEach(ul=>{
+    const sz=ul.dataset.sz;const ph=[];list.filter(r=>r.sz===sz).sort((a,b)=>b.h-a.h||b.w-a.w).forEach(r=>r.files.forEach(f=>ph.push({f,cap:`${sz} · ${r.h}/${r.w}`})));
+    ul.querySelectorAll(".ph button").forEach(b=>b.addEventListener("click",()=>open(ph,ph.findIndex(p=>p.f===b.dataset.f))));
+  });
+});
+</script>
