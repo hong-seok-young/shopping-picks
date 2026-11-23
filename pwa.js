@@ -85,3 +85,64 @@
     banner(false);
   });
 })();
+
+// Back button: closes an enlarged photo first, goes to the previous screen otherwise,
+// and in the installed app needs two presses on the first screen to quit.
+// Musinsa product links open the Musinsa app (Android intent with web fallback; iOS universal link).
+(function () {
+  var standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  var ua = navigator.userAgent, android = /Android/.test(ua), inapp = /KAKAOTALK|NAVER\(|Instagram|FBAN|FBAV|Line\//i.test(ua);
+  var stack = [], skip = 0;
+  window.spOverlay = function (close) { history.pushState({ spo: 1 }, ''); stack.push(close); };
+  window.spOverlayClosed = function () { if (stack.length) { stack.pop(); skip++; history.back(); } };
+
+  // exit guard on the first screen of the app
+  var entry = false;
+  if (standalone) {
+    try {
+      var e0 = sessionStorage.getItem('sp:entry');
+      if (!e0) { sessionStorage.setItem('sp:entry', location.pathname); entry = true; } else entry = e0 === location.pathname;
+    } catch (e) {}
+    if (entry && !(history.state && history.state.spg)) { history.replaceState({ spbase: 1 }, ''); history.pushState({ spg: 1 }, ''); }
+  }
+  var lastBack = 0;
+  function toast(t) {
+    var d = document.createElement('div');
+    d.textContent = t;
+    d.style.cssText = 'position:fixed;left:50%;bottom:max(70px,calc(env(safe-area-inset-bottom) + 60px));transform:translateX(-50%);z-index:10001;background:rgba(20,22,30,.9);color:#fff;font:13px/1.4 system-ui,sans-serif;padding:8px 14px;border-radius:999px;pointer-events:none';
+    document.body.appendChild(d); setTimeout(function () { d.remove(); }, 1800);
+  }
+  addEventListener('popstate', function (e) {
+    if (skip) { skip--; return; }
+    if (stack.length) { var c = stack.pop(); c(); return; }
+    if (entry && e.state && e.state.spbase) {
+      var now = Date.now();
+      if (now - lastBack < 2000) { history.back(); return; }
+      lastBack = now; toast('뒤로가기를 한 번 더 누르면 앱이 꺼져요');
+      history.pushState({ spg: 1 }, '');
+    }
+  });
+
+  function hookLightbox() {
+    [].forEach.call(document.querySelectorAll('.lb'), function (lb) {
+      var open = false;
+      new MutationObserver(function () {
+        var on = lb.classList.contains('on');
+        if (on && !open) { open = true; window.spOverlay(function () { open = false; lb.classList.remove('on'); }); }
+        else if (!on && open) { open = false; window.spOverlayClosed(); }
+      }).observe(lb, { attributes: true, attributeFilter: ['class'] });
+    });
+  }
+
+  // Musinsa app links
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href*="musinsa.com/products/"]');
+    if (!a || !android || inapp) return;
+    var m = a.href.match(/musinsa\.com\/products\/(\d+)/); if (!m) return;
+    e.preventDefault();
+    var web = 'https://www.musinsa.com/products/' + m[1];
+    location.href = 'intent://www.musinsa.com/products/' + m[1] + '#Intent;scheme=https;package=com.musinsa.store;S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
+  }, true);
+
+  if (document.readyState === 'loading') addEventListener('DOMContentLoaded', hookLightbox); else hookLightbox();
+})();
