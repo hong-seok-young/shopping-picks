@@ -2,10 +2,17 @@
 // synced encrypted (AES-GCM, key from the password) so only that person can read them.
 // Runs in <head> (not deferred) so the namespace exists before the page's tools read their state.
 (function () {
-  var USERS = { '홍석영': '32df4b3e9f80d11fb87b3673701f17a0da2920698b8133485f3a6b120ab336d4', '홍준영': '813ad0655d26ee7522594c2246e7de55d744527c398334d49d9f68237f2d1834' };
+  var USERS = { '홍석영': '10a714bab3e7bf46d319d57577de489da226bdc474b2a21e39b3200b8e88788b', '홍준영': '813ad0655d26ee7522594c2246e7de55d744527c398334d49d9f68237f2d1834' };
   // Firebase Realtime Database URL, e.g. 'https://xxx-default-rtdb.asia-southeast1.firebasedatabase.app'. Empty = this device only.
   var DB = '';
   var ITER = 200000;
+  // passwords are compared as 2-beolsik key strokes, so typing with the Korean or English keyboard both work
+  var CHO='r R s e E f a q Q t T d w W c z x v g'.split(' ');
+  var JUNG='k o i O j p u P h hk ho hl y n nj np nl b m ml l'.split(' ');
+  var JONG=['','r','R','rt','s','sw','sg','e','f','fr','fa','fq','ft','fx','fv','fg','a','q','qt','t','T','d','w','c','z','x','v','g'];
+  var COMPAT={'ㄱ':'r','ㄲ':'R','ㄳ':'rt','ㄴ':'s','ㄵ':'sw','ㄶ':'sg','ㄷ':'e','ㄸ':'E','ㄹ':'f','ㄺ':'fr','ㄻ':'fa','ㄼ':'fq','ㄽ':'ft','ㄾ':'fx','ㄿ':'fv','ㅀ':'fg','ㅁ':'a','ㅂ':'q','ㅃ':'Q','ㅄ':'qt','ㅅ':'t','ㅆ':'T','ㅇ':'d','ㅈ':'w','ㅉ':'W','ㅊ':'c','ㅋ':'z','ㅌ':'x','ㅍ':'v','ㅎ':'g','ㅏ':'k','ㅐ':'o','ㅑ':'i','ㅒ':'O','ㅓ':'j','ㅔ':'p','ㅕ':'u','ㅖ':'P','ㅗ':'h','ㅘ':'hk','ㅙ':'ho','ㅚ':'hl','ㅛ':'y','ㅜ':'n','ㅝ':'nj','ㅞ':'np','ㅟ':'nl','ㅠ':'b','ㅡ':'m','ㅢ':'ml','ㅣ':'l'};
+  function kb(s){var o='';for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);if(c>=0xAC00&&c<=0xD7A3){c-=0xAC00;o+=CHO[Math.floor(c/588)]+JUNG[Math.floor(c%588/28)]+JONG[c%28];}else o+=COMPAT[s[i]]||s[i];}return o.trim();}
+
   var enc = new TextEncoder(), dec = new TextDecoder();
   function hex(buf) { return [].map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); }
   function b64(buf) { var s = ''; new Uint8Array(buf).forEach(function (b) { s += String.fromCharCode(b); }); return btoa(s); }
@@ -63,9 +70,14 @@
   window.spSyncChanged = function () { if (!DB || !auth) return; badge('wait'); clearTimeout(timer); timer = setTimeout(push, 1200); };
 
   // ---- login ----
-  function login(name, pw) {
-    return pbkdf2(pw, 'sp-v1-verify:' + name, 256).then(function (v) {
-      if (hex(v) !== USERS[name]) throw new Error('bad');
+  function login(name, raw) {
+    var tries = [kb(raw)]; if (tries[0].toLowerCase() !== tries[0]) tries.push(tries[0].toLowerCase());
+    var pw;
+    function check(i) {
+      if (i >= tries.length) return Promise.reject(new Error('bad'));
+      return pbkdf2(tries[i], 'sp-v1-verify:' + name, 256).then(function (v) { if (hex(v) === USERS[name]) { pw = tries[i]; return; } return check(i + 1); });
+    }
+    return check(0).then(function () {
       return Promise.all([pbkdf2(pw, 'sp-v1-key:' + name, 256), pbkdf2(pw, 'sp-v1-path:' + name, 128)]);
     }).then(function (r) {
       var a = { name: name, key: b64(r[0]), path: hex(r[1]) };
