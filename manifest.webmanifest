@@ -2,6 +2,8 @@
   "name": "190/98 쇼핑 조사",
   "short_name": "쇼핑 조사",
   "lang": "ko",
+  "id": "./",
+  "description": "190cm 98kg 무신사 쇼핑 조사",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
