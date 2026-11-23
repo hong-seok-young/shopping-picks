@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#a3101f"><link rel="apple-touch-icon" href="icons/n190-apple-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="190"><script src="pwa.js"></script><script src="sync.js"></script><script src="cart.js" defer></script>
+<meta name="viewport" content="width=device-width, initial-scale=1"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#a3101f"><link rel="apple-touch-icon" href="icons/n190-apple-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="190"><script src="pwa.js"></script><script src="sync.js"></script><script src="cart.js" defer></script><script src="live.js" defer></script>
 <title>장바구니</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
@@ -42,7 +42,7 @@ h2{font-size:11px;font-weight:700;color:var(--muted);margin:4px 2px 0}
   function esc(t){return String(t||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
   function load(){try{return JSON.parse(localStorage.getItem('sp:'+(window.spUserNS||'')+'cart')||'{}')}catch(e){return{}}}
   function draw(){
-    var c=load(),items=Object.keys(c).map(function(k){return c[k]}),L=document.getElementById('list');
+    var LV=(window.spLive&&window.spLive.items)||{};var c=load(),items=Object.keys(c).map(function(k){var it=Object.assign({},c[k]);var lv=LV[it.id];if(lv){it.was=it.price;if(lv.p)it.price=lv.p;it.so=lv.so}return it}),L=document.getElementById('list');
     var tot=items.reduce(function(a,b){return a+(b.price||0)},0);
     document.getElementById('cnt').textContent=items.length+'개';
     document.getElementById('tot').textContent=tot.toLocaleString('ko-KR')+'원';
@@ -52,7 +52,7 @@ h2{font-size:11px;font-weight:700;color:var(--muted);margin:4px 2px 0}
       var sub=g[k].reduce(function(a,b){return a+(b.price||0)},0);
       return '<h2>'+k+' · '+g[k].length+'개 · '+sub.toLocaleString('ko-KR')+'원</h2>'+g[k].sort(function(a,b){return a.t-b.t}).map(function(it){
         return '<div class="row">'+(it.img?'<img src="'+esc(it.img)+'" alt="" loading="lazy">':'<div class="noimg"></div>')+
-          '<div class="i"><div class="br">'+esc(it.brand)+'</div><div class="nm">'+esc(it.name)+'</div><div class="mt">'+(it.size?esc(it.size)+' · ':'')+'<b>'+(it.price||0).toLocaleString('ko-KR')+'원</b></div></div>'+
+          '<div class="i"><div class="br">'+esc(it.brand)+'</div><div class="nm">'+esc(it.name)+'</div><div class="mt">'+(it.size?esc(it.size)+' · ':'')+'<b>'+(it.price||0).toLocaleString('ko-KR')+'원</b>'+(it.was&&it.was!==it.price?(it.price<it.was?' <span style="color:var(--good);font-weight:700">▼'+(it.was-it.price).toLocaleString('ko-KR')+'</span>':' <span style="color:var(--bad);font-weight:700">▲'+(it.price-it.was).toLocaleString('ko-KR')+'</span>'):'')+(it.so?' <span style="color:#fff;background:#555;border-radius:4px;padding:0 4px;font-size:10px">품절</span>':'')+'</div></div>'+
           '<div class="b"><a href="https://www.musinsa.com/products/'+esc(it.id)+'" target="_blank" rel="noopener">무신사</a><button type="button" data-id="'+esc(it.id)+'">빼기</button></div></div>';
       }).join('');
     }).join('');
