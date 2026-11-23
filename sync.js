@@ -4,7 +4,7 @@
 (function () {
   var USERS = { '홍석영': '10a714bab3e7bf46d319d57577de489da226bdc474b2a21e39b3200b8e88788b', '홍준영': '813ad0655d26ee7522594c2246e7de55d744527c398334d49d9f68237f2d1834' };
   // Firebase Realtime Database URL, e.g. 'https://xxx-default-rtdb.asia-southeast1.firebasedatabase.app'. Empty = this device only.
-  var DB = '';
+  var DB = 'https://shopping-picks-190-default-rtdb.asia-southeast1.firebasedatabase.app';
   var ITER = 200000;
   // passwords are compared as 2-beolsik key strokes, so typing with the Korean or English keyboard both work
   var CHO='r R s e E f a q Q t T d w W c z x v g'.split(' ');
@@ -59,17 +59,21 @@
     return changed;
   }
   function url() { return DB.replace(/\/$/, '') + '/sp/' + auth.path + '.json'; }
+  // never push before this device has pulled once: otherwise an empty phone could overwrite the server copy
+  var pulled = false;
   function pull() {
     if (!DB || !auth) return Promise.resolve(false);
-    return fetch(url()).then(function (r) { return r.ok ? r.json() : null; }).then(function (o) {
+    return fetch(url()).then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); }).then(function (o) {
+      pulled = true;
       if (!o || !o.iv) return false;
       return aesKey().then(function (k) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(o.iv) }, k, unb64(o.ct)); })
         .then(function (pt) { var d = JSON.parse(dec.decode(pt)); window.spSyncAt = d.t || 0; return apply(d.data); });
-    }).catch(function () { return false; });
+    }).catch(function () { badge('err'); return false; });
   }
   var timer = 0;
   function push() {
     if (!DB || !auth) return;
+    if (!pulled) { pull().then(function (changed) { if (pulled) { if (changed && window.spToolsReload) window.spToolsReload(); push(); } }); return; }
     var body = { t: Date.now(), data: collect() };
     var iv = crypto.getRandomValues(new Uint8Array(12));
     aesKey().then(function (k) { return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, k, enc.encode(JSON.stringify(body))); })
