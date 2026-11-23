@@ -113,7 +113,8 @@ def fit_shoes(opts):
     hit = [o for o in (opts or []) if re.search(SHOE290, str(o), re.I)]
     if not hit:
         return None
-    rng = '%s~%s' % (opts[0], opts[-1]) if opts else '-'
+    num = [o for o in (opts or []) if re.fullmatch(r'\s*\d{3}\s*', str(o))]
+    rng = '%s~%s' % (min(num, key=int), max(num, key=int)) if num else '-'
     return hit[0], {}, [('사이즈', hit[0], 'ok'), ('옵션 범위', rng, ''), ('발 290', '있음', 'ok')]
 
 
@@ -164,8 +165,8 @@ def fit_row(cat, name, rows):
     elif rule == 'coat':
         spec = [('사이즈', n, ''), ('총장', f(m.get('총장')), 'ok'), ('어깨', f(m.get('어깨너비')), ''), ('가슴단면', f(m.get('가슴단면')), ''), ('소매', f(m.get('소매길이')), '')]
     else:
-        reach = rk if rule == 'knit' else rs
-        lab = '환산 소매' if rule == 'knit' else '리치(어깨/2+소매)'
+        reach = rk if rule == 'knit' else (m.get('소매길이') if rule in ('tee', 'tank') else rs)
+        lab = '환산 소매' if rule == 'knit' else ('소매' if rule in ('tee', 'tank') else '리치(어깨/2+소매)')
         spec = [('사이즈', n, ''), ('총장', f(m.get('총장')), 'ok'), ('어깨', f(m.get('어깨너비')), ''), ('가슴단면', f(m.get('가슴단면')), ''),
                 (lab, '-' if reach is None else '%.1f' % reach, 'ok' if reach else '')]
     return n, m, spec
