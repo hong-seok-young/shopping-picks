@@ -132,7 +132,7 @@
       var v = s.querySelector('.verdict'); if (v) out += '<div class="dk-v">' + v.innerHTML + '</div>';
       var rs = s.querySelector('.revsum'); if (rs) out += '<p class="dk-rs">' + esc(txt(rs)) + '</p>';
       var lis = s.querySelectorAll('ul.rev > li');
-      if (lis.length) out += '<ul class="dk-rv">' + [].map.call(lis, function (li) { return '<li>' + li.innerHTML + '</li>'; }).join('') + '</ul>';
+      if (lis.length) out += window.spRevGroup ? window.spRevGroup(lis) : '<ul class="dk-rv">' + [].map.call(lis, function (li) { return '<li>' + li.innerHTML + '</li>'; }).join('') + '</ul>';
       return out;
     }
     function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
