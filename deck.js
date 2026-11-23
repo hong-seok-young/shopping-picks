@@ -34,7 +34,7 @@
     '.dk-m .r{margin-left:auto;display:flex;gap:3px;align-items:center}' +
     '.dk-m .go{font-weight:700;font-size:11px;color:var(--surface);background:var(--accent);border-radius:6px;padding:4px 8px;text-decoration:none}' +
     '.dk-tools button{font:inherit;font-size:12px;line-height:1;cursor:pointer;background:var(--surface);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:4px 6px;min-width:26px}' +
-    '.dk-tools button[aria-pressed="true"]{color:var(--accent);border-color:var(--accent)}.dk-tools button.star[aria-pressed="true"]{color:#d49a00;border-color:#d49a00}' +
+    '.dk-tools button.cart[aria-pressed="true"]{color:#fff;background:var(--accent);border-color:var(--accent)}.dk-tools button[aria-pressed="true"]{color:var(--accent);border-color:var(--accent)}.dk-tools button.star[aria-pressed="true"]{color:#d49a00;border-color:#d49a00}' +
     '.dk-memo{width:100%;box-sizing:border-box;font:inherit;font-size:12px;padding:4px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);resize:none}' +
     '.dk-sp{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:2px}' +
     '.dk-sp div{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:2px 4px;min-width:0}' +
@@ -118,7 +118,7 @@
       var meta = [].map.call(s.querySelectorAll('.meta > span'), function (m) { return m.innerHTML; });
       var out = '<h2 class="dk-h"><span class="rk">' + (rk ? txt(rk) : '') + '</span><span class="br">' + esc(brand) + '</span>' + esc(name) + tags + '</h2>' +
         '<div class="dk-m">' + meta.map(function (m) { return '<span>' + m.replace('비슷한 체형 후기', '비슷') + '</span>'; }).join('') +
-        '<span class="r dk-tools"><button type="button" data-t="star" class="star" aria-label="별표">★</button><button type="button" data-t="memo" aria-label="메모">✎</button><button type="button" data-t="low" aria-label="후순위로">↓</button><button type="button" data-t="del" aria-label="삭제">✕</button>' +
+        '<span class="r dk-tools"><button type="button" data-t="cart" class="cart" aria-label="장바구니">🛒</button><button type="button" data-t="star" class="star" aria-label="별표">★</button><button type="button" data-t="memo" aria-label="메모">✎</button><button type="button" data-t="low" aria-label="후순위로">↓</button><button type="button" data-t="del" aria-label="삭제">✕</button>' +
         '<a class="go" href="' + href + '" target="_blank" rel="noopener">무신사</a></span></div>' +
         '<textarea class="dk-memo" rows="1" placeholder="메모" hidden></textarea>';
       var specs = s.querySelectorAll('.spec');
@@ -142,6 +142,7 @@
       var src = s.querySelector('.itools');
       var memo = s.querySelector('.imemo');
       slide.querySelector('[data-t="star"]').setAttribute('aria-pressed', String(s.classList.contains('is-star')));
+      var cb = slide.querySelector('[data-t="cart"]'); if (cb && window.spCart) cb.setAttribute('aria-pressed', String(window.spCart.has(keyOf(s))));
       var dm = slide.querySelector('.dk-memo');
       var mv = memo ? memo.value : '';
       slide.querySelector('[data-t="memo"]').setAttribute('aria-pressed', String(!!mv.trim()));

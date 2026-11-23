@@ -38,7 +38,7 @@
     var pre = 'sp:' + window.spUserNS, out = {};
     for (var i = 0; i < localStorage.length; i++) {
       var k = localStorage.key(i);
-      if (k.indexOf(pre) === 0 && /:(star|low|del|memo)$/.test(k)) out[k.slice(pre.length)] = localStorage.getItem(k);
+      if (k.indexOf(pre) === 0 && /(^|:)(star|low|del|memo|cart)$/.test(k.slice(pre.length))) out[k.slice(pre.length)] = localStorage.getItem(k);
     }
     return out;
   }
@@ -115,11 +115,10 @@
     var names = Object.keys(USERS), pick = window.spUser || names[0];
     bg.innerHTML = '<form><h3>누구세요?</h3><div class="who">' + names.map(function (n) { return '<button type="button" data-n="' + n + '" aria-pressed="' + (n === pick) + '">' + n + '</button>'; }).join('') + '</div>' +
       '<input type="password" placeholder="비밀번호" autocomplete="current-password" required><p class="msg"></p><button class="go" type="submit">로그인</button>' +
-      '<button class="skip" type="button">로그인 없이 보기</button></form>';
+      '</form>';
     document.body.appendChild(bg);
     var form = bg.querySelector('form'), pw = bg.querySelector('input'), msg = bg.querySelector('.msg');
     bg.querySelectorAll('.who button').forEach(function (b) { b.onclick = function () { pick = b.dataset.n; bg.querySelectorAll('.who button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); pw.focus(); }; });
-    bg.querySelector('.skip').onclick = function () { try { sessionStorage.setItem('sp:skip', '1'); } catch (e) {} bg.remove(); };
     form.onsubmit = function (e) {
       e.preventDefault(); msg.textContent = '확인 중…';
       login(pick, pw.value).then(function () { location.reload(); }).catch(function () { msg.textContent = '비밀번호가 맞지 않아요.'; pw.select(); });
@@ -138,11 +137,11 @@
     var top = document.querySelector('.dk-top');
     if (top) top.insertBefore(badgeEl, top.querySelector('.ls')); else document.body.appendChild(badgeEl);
     badge();
-    if (!window.spUser) { var sk = null; try { sk = sessionStorage.getItem('sp:skip'); } catch (e) {} if (!sk) showLogin(); }
+    if (!window.spUser) showLogin(); // login is required; it stays until the person logs out
   }
   function ready(fn) { if (document.readyState === 'complete') fn(); else addEventListener('load', fn); }
   ready(function () {
     setTimeout(mountBadge, 120); // after deck.js builds its top bar
-    if (window.spUser && DB) { badge('wait'); pull().then(function (changed) { badge('ok'); if (changed && window.spToolsReload) window.spToolsReload(); }); }
+    if (window.spUser && DB) { badge('wait'); pull().then(function (changed) { badge('ok'); if (changed) { if (window.spToolsReload) window.spToolsReload(); else dispatchEvent(new Event('spstate')); dispatchEvent(new Event('spcart')); } }); }
   });
 })();
