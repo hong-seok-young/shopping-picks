@@ -26,3 +26,7 @@ os.makedirs(os.path.join(root, 'data'), exist_ok=True)
 json.dump({'updated': now.strftime('%Y-%m-%d %H:%M'), 'items': items}, open(os.path.join(root, 'data', 'live.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 json.dump(hist, open(hp, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('items', len(items), 'soldout', sum(1 for v in items.values() if v['so']), 'changed', sum(1 for v in items.values() if v.get('prev') and v['prev'] != v['p']))
+
+# home screen counts
+import subprocess, sys
+subprocess.run([sys.executable, os.path.join(root, 'tools', 'pages.py')])

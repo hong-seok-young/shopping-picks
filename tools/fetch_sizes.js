@@ -1,5 +1,5 @@
 // On any https://www.musinsa.com page, with window._ids = ['123', ...]: size chart, material and seller fabric feel per product
-// -> POST cand_sizes.json {id: {sizes: [[name, [[k, v], ...]], ...], mat, feel: {두께: ..}}}. Progress in window._sz.
+// -> POST cand_sizes.json {id: {sizes: [[name, [[k, v], ...]], ...], mat, feel: {두께: ..}, opts: [option names]}}. Progress in window._sz.
 window._sz = 'run';
 (async () => {
   const out = {}, G = 'https://goods-detail.musinsa.com/api2/goods/'; let k = 0;
@@ -8,6 +8,7 @@ window._sz = 'run';
     try { const a = await (await fetch(G + id + '/actual-size')).json(); o.sizes = ((a.data && a.data.sizes) || []).map(s => [s.name, s.items.map(i => [i.name, i.value])]); } catch (e) {}
     try { const e = await (await fetch(G + id + '/essential')).json(); const m = (e.data.essentials || []).find(x => /소재/.test(x.name)); o.mat = m ? m.value : ''; } catch (e) {}
     try { const d = await (await fetch(G + id)).json(); const it = (d.data.goodsMaterial && d.data.goodsMaterial.materials) || []; o.feel = {}; it.forEach(x => { o.feel[x.name] = (x.items || []).filter(i => i.isSelected).map(i => i.name).join('/'); }); } catch (e) {}
+    try { const op = await (await fetch(G + id + '/options')).json(); o.opts = ((op.data && op.data.basic) || []).flatMap(b => (b.optionValues || []).filter(v => !v.isDeleted).map(v => v.name)); } catch (e) {}
     out[id] = o; k++; window._sz = 'n ' + k;
   };
   const ids = (window._ids || []).slice();

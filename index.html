@@ -41,6 +41,8 @@ h2{font-size:11px;font-weight:700;color:var(--muted);margin:4px 2px 0;letter-spa
     <a class="t" href="hoodie.html"><b>후드티</b><em>12</em></a>
     <a class="t" href="longsleeve.html"><b>긴팔티</b><em>12</em></a>
     <a class="t" href="shirts.html"><b>셔츠</b><em>12</em></a>
+    <a class="t" href="tees.html"><b>반팔티</b><em>0</em></a>
+    <a class="t" href="gym.html"><b>헬스</b><em>180</em></a>
   </div>
   <h2>아우터</h2>
   <div class="grid">
@@ -48,12 +50,28 @@ h2{font-size:11px;font-weight:700;color:var(--muted);margin:4px 2px 0;letter-spa
     <a class="t" href="outer.html"><b>아우터</b><em>45</em></a>
     <a class="t" href="cardigan.html"><b>가디건</b><em>18</em></a>
   </div>
-  <h2>하의 · 헬스</h2>
+  <h2>하의 · 신발</h2>
   <div class="grid">
     <a class="t" href="pants.html"><b>바지</b><em>26</em></a>
-    <a class="t" href="gym.html"><b>헬스</b><em>180</em></a>
+    <a class="t" href="shoes.html"><b>신발</b><em>0</em></a>
   </div>
 </div>
 <script>
-(function(){function n(){try{var c=JSON.parse(localStorage.getItem('sp:'+(window.spUserNS||'')+'cart')||'{}');document.getElementById('cartn').textContent=Object.keys(c).length}catch(e){}}n();addEventListener('spcart',n);addEventListener('pageshow',n);})();
+(function(){
+  // counts are per person: products on each page minus the ones this person deleted or moved down
+  var P=null;
+  function st(page,k){try{return JSON.parse(localStorage.getItem('sp:'+(window.spUserNS||'')+page+':'+k)||'{}')}catch(e){return {}}}
+  function n(){
+    try{var c=JSON.parse(localStorage.getItem('sp:'+(window.spUserNS||'')+'cart')||'{}');document.getElementById('cartn').textContent=Object.keys(c).length}catch(e){}
+    if(!P)return;
+    document.querySelectorAll('.t[href], .t .cover[href]').forEach(function(a){
+      var page=a.getAttribute('href'),ids=P[page];if(!ids)return;
+      var del=st(page,'del'),low=st(page,'low');
+      var left=ids.filter(function(i){return !del[i]&&!low[i]}).length;
+      var em=(a.classList.contains('cover')?a.parentNode:a).querySelector('em');if(em)em.textContent=left;
+    });
+  }
+  fetch('data/pages.json?t='+Math.floor(Date.now()/600000)).then(function(r){return r.json()}).then(function(d){P=d;n()}).catch(function(){});
+  n();addEventListener('spcart',n);addEventListener('spstate',n);addEventListener('pageshow',n);
+})();
 </script>

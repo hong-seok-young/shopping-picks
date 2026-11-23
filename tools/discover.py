@@ -1,16 +1,17 @@
 """Daily discovery of new Musinsa products for every category page.
 
 Browser steps (run in a Chrome tab on https://www.musinsa.com, results POSTed to tools/recv.py):
-  search_capture.js  -> inbox/s_<cat>_<n>.json    (one per keyword)
+  api_capture.js     -> inbox/s_<cat>_<n>.json    (window._kw = output of `discover.py keywords`; no scrolling needed)
   fetch_sizes.js     -> inbox/cand_sizes.json
   fetch_reviews.js   -> inbox/r_<id>.json
 Python steps:
-  python tools/discover.py keywords      # prints the search plan as JSON [[cat, keyword], ...]
+  python tools/discover.py keywords      # prints the search plan as JSON [[cat, keyword, fileName], ...]
   python tools/discover.py candidates    # -> inbox/cand_ids.json (new ids worth measuring)
   python tools/discover.py fit           # -> inbox/fit.json, prints ids that need reviews
   python tools/discover.py build         # appends passing products to each page under '새로 찾은 상품'
-Rules are the user's (190cm/98kg): reviews >= 50, no Musinsa Standard, plain tops (no print/logo/stripe/pocket),
-knits under 110,000 KRW, no linen pants, coats >= 130cm long and black.
+Rules are the user's (190cm/98kg, shoes 290): size first - anything whose size chart fits is added; then style (dandy /
+minimal: no logo/print/graphic tops). Reviews >= 50, no Musinsa Standard, knits under 110,000 KRW, no linen pants,
+coats >= 130cm long and black, shoes must offer 290.
 """
 import re, os, sys, json, glob, html, datetime
 from collections import Counter
@@ -22,27 +23,50 @@ sys.path.insert(0, os.path.join(ROOT, 'tools'))
 from sameprod import same as same_product  # noqa: E402
 
 E = lambda s: html.escape(str(s), quote=True)
-PER_DAY_MEASURE = 40
-PER_DAY_ADD = 5
-TOPS = r'프린트|프린팅|print|로고|logo|그래픽|graphic|레터링|lettering|스트라이프|stripe|포켓|pocket|자수|embroid|아트웍|artwork|아플리케|패치|patch|심볼|symbol'
+PER_DAY_MEASURE = 400
+PER_DAY_ADD = 100000  # size fits -> add (user, 2026-11-23)
+TOPS = r'프린트|프린팅|print|로고|logo|그래픽|graphic|레터링|lettering|자수|embroid|아트웍|artwork|아플리케|패치|patch|심볼|symbol|캐릭터|하트'
 BAD = r'무신사 ?스탠다드|여성|우먼|women|wmns|키즈|kids|주니어|아동|세트$|양말|socks|가방|모자|캡|비니|머플러|장갑'
 
 GYM_BRANDS = ['에이치덱스', '드릭스', '본투윈', '제이엘브', '나인제트', '바이젝', '프리덤애슬레틱', '몰든', '피지컬가먼츠', '허그본',
               '알브이디', '블랙몬스터핏', '베르만', '디미트리블랙', '바벨웍스', '웨이든', '카미드', '카키그라도', '언더아머']
 
 CATS = {
-    'knit': dict(page='knit.html', kw=['니트', '케이블 니트'], name=r'니트|스웨터|knit|sweater', excl=r'가디건|집업|zip|조끼|베스트|vest|터틀|폴라|모크|하이넥|반팔|숏 ?슬리브|카라|폴로|' + TOPS, price=110000, fit='knit', thick=True),
+    'knit': dict(page='knit.html', kw=['니트', '케이블 니트', '하찌 니트', '헨리넥 니트', '하프집업 니트', '리브 니트'], name=r'니트|스웨터|knit|sweater', excl=r'가디건|조끼|베스트|vest|터틀|폴라|모크|하이넥|반팔|숏 ?슬리브|' + TOPS, price=110000, fit='knit', thick=True),
     'turtleneck': dict(page='turtleneck.html', kw=['터틀넥', '폴라 니트'], name=r'터틀넥|폴라|모크넥|하이넥|turtle|mock', excl=r'지퍼|zip|후디|후드|hood|폴라베어|맨투맨|플리스|fleece|반팔|조끼|' + TOPS, price=110000, fit='knit', thick=True),
     'sweat': dict(page='sweat.html', kw=['맨투맨'], name=r'맨투맨|스웨트 ?셔츠|sweat ?shirt|크루넥', excl=r'후드|후디|hood|집업|zip|셋업|반팔|' + TOPS, fit='sweat', thick=True),
     'hoodie': dict(page='hoodie.html', kw=['후드티'], name=r'후드|후디|hood', excl=r'집업|zip|셋업|반팔|베스트|조끼|패딩|자켓|재킷|아노락|바람막이|' + TOPS.replace('|포켓|pocket', ''), fit='sweat', thick=True),
     'longsleeve': dict(page='longsleeve.html', kw=['긴팔티', '롱슬리브'], name=r'긴팔|롱 ?슬리브|long ?sleeve', excl=r'니트|후드|맨투맨|집업|zip|폴로|카라|(?<!티)셔츠|' + TOPS, fit='long'),
-    'shirts': dict(page='shirts.html', kw=['셔츠'], name=r'(?<!티)(?<!티 )셔츠|shirt', excl=r'티셔츠|t-shirt|tee|반팔|숏 ?슬리브|스웨트|맨투맨|린넨|linen|' + TOPS.replace('|포켓|pocket', ''), fit='sweat'),
+    'shirts': dict(page='shirts.html', kw=['셔츠', '옥스포드 셔츠', '오버핏 셔츠'], name=r'(?<!티)(?<!티 )셔츠|shirt', excl=r'티셔츠|t-shirt|tee|반팔|숏 ?슬리브|스웨트|맨투맨|린넨|linen|' + TOPS.replace('|포켓|pocket', ''), fit='sweat'),
     'cardigan': dict(page='cardigan.html', kw=['가디건'], name=r'가디건|cardigan', excl=r'크롭|crop|조끼|베스트|반팔|' + TOPS, price=110000, fit='knit', thick=True),
-    'outer': dict(page='outer.html', kw=['자켓', '블루종', '패딩'], name=r'자켓|재킷|jacket|블루종|점퍼|패딩|파카|parka|후드 ?집업', excl=r'코트|coat|조끼|베스트|vest|반팔|셔츠|셋업', fit='outer'),
+    'outer': dict(page='outer.html', kw=['자켓', '블루종', '패딩', '파카', '블레이저'], name=r'자켓|재킷|jacket|블루종|점퍼|패딩|파카|parka|후드 ?집업', excl=r'코트|coat|조끼|베스트|vest|반팔|셔츠|셋업', fit='outer'),
     'coat': dict(page='coat.html', kw=['롱코트'], name=r'코트|coat', excl=r'더플|떡볶이|후드|hood|벨트|belt|로브|robe|하프|숏|트렌치|패딩|무스탕|퍼|레인', fit='coat', black=True),
-    'pants': dict(page='pants.html', kw=['와이드 팬츠', '슬랙스', '데님 팬츠'], name=r'팬츠|pants|슬랙스|바지|데님|진\b|치노|카고|트라우저', excl=r'린넨|linen|쇼츠|반바지|shorts|하프|레깅스|버뮤다|조거 ?쇼츠|\d ?부', fit='pants'),
+    'pants': dict(page='pants.html', kw=['와이드 팬츠', '슬랙스', '데님 팬츠', '와이드 슬랙스', '치노 팬츠'], name=r'팬츠|pants|슬랙스|바지|데님|진\b|치노|카고|트라우저', excl=r'린넨|linen|쇼츠|반바지|shorts|하프|레깅스|버뮤다|조거 ?쇼츠|\d ?부', fit='pants'),
+    'tee': dict(page='tees.html', kw=['반팔 티셔츠', '무지 반팔', '헤비 반팔', '피케 셔츠'], name=r'반팔|반소매|티셔츠|tee|숏 ?슬리브|하프 ?슬리브|피케|폴로|pk', excl=r'긴팔|롱 ?슬리브|셋업|크롭|나시|민소매|' + TOPS, fit='tee'),
+    'shoes': dict(page='shoes.html', kw=['로퍼', '더비 슈즈', '첼시 부츠', '스웨이드 로퍼', '스니커즈', '워커'], name=r'로퍼|loafer|더비|derby|옥스포드|oxford|부츠|boot|스니커즈|sneaker|운동화|워커|모카신|슈즈|shoes', excl=r'슬리퍼|샌들|slide|쪼리|키즈|여성|힐|레인', fit='shoes'),
     'gym': dict(page='gym.html', kw=GYM_BRANDS, name=r'.', excl=TOPS + r'|컴프레션|compression|레깅스|타이츠|카라|폴로|럭비|저지|jersey|셋업|vlad', fit='gym', brands=GYM_BRANDS),
 }
+
+
+# brand keywords from the dandy / minimal research: every product is routed to a category by its name
+MIX_KW = ['에스피오나지', '무드인사이드', '필루미네이트', '시그니처', '인더스트', '쿠어', '로우클래식', '모르하스']
+
+
+def classify(name):
+    n = name
+    order = [('shoes', r'로퍼|loafer|더비|derby|부츠|boot|스니커즈|sneaker|운동화|워커|모카신'),
+             ('coat', r'코트|coat'), ('cardigan', r'가디건|cardigan'), ('turtleneck', r'터틀넥|폴라 ?니트|모크넥|하이넥'),
+             ('outer', r'자켓|재킷|jacket|블루종|점퍼|패딩|파카|parka|블레이저|후드 ?집업'), ('knit', r'니트|스웨터|knit|sweater'),
+             ('hoodie', r'후드|후디|hood'), ('sweat', r'맨투맨|스웨트 ?셔츠|sweat ?shirt'),
+             ('pants', r'팬츠|pants|슬랙스|바지|데님|치노|카고|트라우저'), ('tee', r'반팔|반소매|숏 ?슬리브|하프 ?슬리브|피케|폴로'),
+             ('longsleeve', r'긴팔|롱 ?슬리브|long ?sleeve'), ('shirts', r'(?<!티)셔츠|shirt')]
+    for cat, rx in order:
+        if re.search(rx, n, re.I):
+            return cat
+    return None
+
+
+SHOE290 = r'(^|\D)290(\D|$)|US ?11(\D|$)|EU ?45(\D|$)|UK ?10(\.5)?(\D|$)'
 
 
 def load(p, d=None):
@@ -83,6 +107,14 @@ def gym_type(n):
     if re.search(r'(?<!티)(?<!트)셔츠|(?<!t-)(?<!t)shirt', n, re.I): return '셔츠'
     if re.search(r'반팔|반소매|티셔츠|tee|t-shirt|숏 ?슬리브|하프 ?슬리브|머슬핏|오버핏', n, re.I): return '반팔'
     return None
+
+
+def fit_shoes(opts):
+    hit = [o for o in (opts or []) if re.search(SHOE290, str(o), re.I)]
+    if not hit:
+        return None
+    rng = '%s~%s' % (opts[0], opts[-1]) if opts else '-'
+    return hit[0], {}, [('사이즈', hit[0], 'ok'), ('옵션 범위', rng, ''), ('발 290', '있음', 'ok')]
 
 
 def fit_row(cat, name, rows):
@@ -141,7 +173,13 @@ def fit_row(cat, name, rows):
 
 # ---------- steps ----------
 def cmd_keywords():
-    print(json.dumps([[c, k] for c, v in CATS.items() for k in v['kw']], ensure_ascii=False))
+    plan = []
+    for c, v in CATS.items():
+        for i, k in enumerate(v['kw']):
+            plan.append([c, k, 's_%s_%d.json' % (c, i)])
+    for i, k in enumerate(MIX_KW):
+        plan.append(['mix', k, 's_mix_%d.json' % i])
+    print(json.dumps(plan, ensure_ascii=False))
 
 
 def cmd_candidates():
@@ -149,12 +187,15 @@ def cmd_candidates():
     seen = set(load(SEEN, []))
     out = {}
     for f in glob.glob(os.path.join(INBOX, 's_*.json')):
-        cat = os.path.basename(f)[2:].rsplit('_', 1)[0]
-        c = CATS.get(cat)
-        if not c:
+        fcat = os.path.basename(f)[2:].rsplit('_', 1)[0]
+        if fcat != 'mix' and fcat not in CATS:
             continue
         for v in (load(f, {}) or {}).values():
             pid, brand, name, price, rc = str(v[0]), v[1] or '', v[2] or '', v[3] or 0, v[6] or 0
+            cat = classify(name) if fcat == 'mix' else fcat
+            c = CATS.get(cat)
+            if not c:
+                continue
             if pid in have or pid in seen or rc < 50:
                 continue
             if c.get('brands') and brand not in c['brands']:
@@ -192,7 +233,7 @@ def cmd_fit():
         thick = (o.get('feel') or {}).get('두께', '')
         if CATS[cat].get('thick') and thick in ('얇음', '약간 얇음'):
             continue
-        r = fit_row(cat, name, rows_of(o.get('sizes')))
+        r = fit_shoes(o.get('opts')) if cat == 'shoes' else fit_row(cat, name, rows_of(o.get('sizes')))
         if r:
             res[pid] = dict(cat=cat, brand=brand, name=name, price=price, rc=rc, size=r[0], spec=r[2], mat=re.sub(r'<[^>]+>', ' ', mat).strip(), thick=thick)
             seen.discard(pid)
@@ -245,24 +286,56 @@ def card(pid, it, rows, ph, verdict, rank, allrank, pants_band=None):
                format(int(it['rc']), ','), len(rows), pid, verdict, sp, gal, revs))
 
 
-def insert(page, sections):
+NEW_PAGES = {'tees.html': ('반팔티', '반팔 티셔츠'), 'shoes.html': ('신발', '신발 (290)')}
+
+
+def ensure_page(page):
+    p = os.path.join(ROOT, page)
+    if os.path.exists(p):
+        return
+    tpl = open(os.path.join(ROOT, 'outer.html'), encoding='utf-8').read()
+    head = tpl[:tpl.index('<div class="wrap">')]
+    head = re.sub(r'<title>[^<]*</title>', '<title>%s</title>' % NEW_PAGES[page][0], head, count=1)
+    tail = tpl[tpl.index('<script>\nconst lb='):]
+    body = '<div class="wrap">\n<a class="back" href="./">← 목록</a>\n<header><h1>%s</h1></header>\n</div>\n' % NEW_PAGES[page][1]
+    open(p, 'w', encoding='utf-8').write(head + body + tail)
+
+
+def insert(page, sections, label='새로 찾은 상품'):
+    ensure_page(page)
     p = os.path.join(ROOT, page)
     s = open(p, encoding='utf-8').read()
-    start, end = '<!--NEWFINDS-->', '<!--/NEWFINDS-->'
+    key = label if label == '새로 찾은 상품' else 'G:' + label
+    start, end = '<!--NEWFINDS%s-->' % ('' if key == label else ':' + label), '<!--/NEWFINDS%s-->' % ('' if key == label else ':' + label)
     if start not in s:
         if page == 'knit.html':
             k = s.index('<div class="dropped box">')
         else:
             tail = s.find('<script>\nconst lb=')
-            k = s.rindex('</section>', 0, tail if tail > 0 else len(s)) + len('</section>')
-        s = s[:k] + '\n' + start + '\n<h3 class="tier">새로 찾은 상품 · 0개</h3>\n' + end + '\n' + s[k:]
+            tail = tail if tail > 0 else len(s)
+            k = s.rfind('</section>', 0, tail)
+            k = k + len('</section>') if k >= 0 else s.rindex('</div>', 0, tail)
+            ends = [m.end() for m in re.finditer(r'<!--/NEWFINDS[^>]*-->', s[:tail])]
+            if ends and ends[-1] > k:
+                k = ends[-1]
+        s = s[:k] + '\n' + start + '\n<h3 class="tier">%s · 0개</h3>\n' % label + end + '\n' + s[k:]
     a, b = s.index(start), s.index(end)
     block = s[a:b]
     n = len(re.findall(r'<section class="item"', block)) + len(sections)
-    block = re.sub(r'새로 찾은 상품 · \d+개', '새로 찾은 상품 · %d개' % n, block) + '\n'.join(sections) + '\n'
+    block = re.sub(re.escape(label) + r' · \d+개', '%s · %d개' % (label, n), block) + '\n'.join(sections) + '\n'
     s = s[:a] + block + s[b:]
     open(p, 'w', encoding='utf-8').write(s)
     return n
+
+
+def sublabel(cat, name):
+    if cat == 'shoes':
+        for lab, rx in (('로퍼', r'로퍼|loafer|모카신'), ('더비·옥스포드', r'더비|derby|옥스포드|oxford|구두'), ('부츠', r'부츠|boot|워커'), ('스니커즈', r'.')):
+            if re.search(rx, name, re.I):
+                return lab
+    if cat == 'tee':
+        return '피케·폴로' if re.search(r'피케|폴로|pk|카라', name, re.I) else '반팔 티셔츠'
+    return '새로 찾은 상품'
 
 
 def cmd_build():
@@ -279,9 +352,6 @@ def cmd_build():
         firm = sum(1 for t in texts if re.search(FIRM, t))
         thin = sum(1 for t in texts if re.search(THIN, t))
         fitc = sum(1 for t in texts if re.search(FIT, t))
-        if (CATS[it['cat']].get('thick') and thin > firm) or thin * 100 / nt >= 15:
-            seenset.add(pid)
-            continue
         seen, rows = set(), []
         for r in sorted([r for r in o.get('sim') or [] if r[3]], key=lambda r: DIST(r[0], r[1])):
             k = (r[0], r[1], r[3])
@@ -307,16 +377,23 @@ def cmd_build():
         uniq = uniq[:PER_DAY_ADD]  # at most 5 new cards per page per day; the rest stay unseen for later days
         seenset.update(x[0] for x in uniq)
         page = CATS[cat]['page']
-        s = open(os.path.join(ROOT, page), encoding='utf-8').read()
-        base = max([int(v) for v in re.findall(r'data-all="(\d+)"', s)] + [0])
-        blk = re.findall(r'<!--NEWFINDS-->.*?<!--/NEWFINDS-->', s, re.S)
-        nb = blk[0].count('<section class="item"') if blk else 0
-        secs = []
-        for i, (pid, it, rows, ph, verdict, _) in enumerate(uniq, 1):
-            band = (1 if re.search(r'밴딩|banding', it['name'], re.I) else 0) if cat == 'pants' else None
-            secs.append(card(pid, it, rows, ph, verdict, nb + i, base + i, band))
-        n = insert(page, secs)
-        added[cat] = [len(secs), n]
+        ensure_page(page)
+        bylab = {}
+        for x in uniq:
+            bylab.setdefault(sublabel(cat, x[1]['name']), []).append(x)
+        total = 0
+        for lab, xs in bylab.items():
+            s = open(os.path.join(ROOT, page), encoding='utf-8').read()
+            base = max([int(v) for v in re.findall(r'data-all="(\d+)"', s)] + [0])
+            m = re.search(r'<!--NEWFINDS%s-->(.*?)<!--/NEWFINDS%s-->' % (('', '') if lab == '새로 찾은 상품' else (':' + re.escape(lab), ':' + re.escape(lab))), s, re.S)
+            nb = m.group(1).count('<section class="item"') if m else 0
+            secs = []
+            for i, (pid, it, rows, ph, verdict, _) in enumerate(xs, 1):
+                band = (1 if re.search(r'밴딩|banding', it['name'], re.I) else 0) if cat == 'pants' else None
+                secs.append(card(pid, it, rows, ph, verdict, nb + i, base + i, band))
+            insert(page, secs, lab)
+            total += len(secs)
+        added[cat] = [total, 0]
     json.dump(sorted(seenset), open(SEEN, 'w', encoding='utf-8'))
     # home tile counts follow the number of products on each page
     idx = os.path.join(ROOT, 'index.html')
@@ -326,6 +403,8 @@ def cmd_build():
         h = re.sub(r'(href="%s"><b>[^<]*</b><em>)(\d+)(</em>)' % re.escape(page), lambda m: m.group(1) + str(int(m.group(2)) + k) + m.group(3), h)
         h = re.sub(r'(href="%s" aria-label="[^"]*"></a><b>[^<]*</b><em>)(\d+)(</em>)' % re.escape(page), lambda m: m.group(1) + str(int(m.group(2)) + k) + m.group(3), h)
     open(idx, 'w', encoding='utf-8').write(h)
+    import subprocess
+    subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'pages.py')])
     print(json.dumps({c: v[0] for c, v in added.items()}, ensure_ascii=False))
     for cat, items in groups.items():
         for pid, it, *_ in items:
