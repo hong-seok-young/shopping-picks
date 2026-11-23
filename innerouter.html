@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#2e3f6e"><link rel="apple-touch-icon" href="icons/apple-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="쇼핑 조사"><script src="pwa.js"></script><script src="revgroup.js" defer></script><script src="deck.js" defer></script>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#2e3f6e"><link rel="apple-touch-icon" href="icons/apple-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="쇼핑 조사"><script src="pwa.js"></script><script src="sync.js"></script><script src="revgroup.js" defer></script><script src="deck.js" defer></script>
 <title>코트 안 두꺼운 가디건</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
@@ -174,9 +174,9 @@ ul.rev.fold li:nth-child(n+4){display:none}
 <script>
 window.addEventListener("load",()=>{setTimeout(()=>{
 const page=location.pathname.split("/").pop()||"index.html";
-const K="sp:"+page+":";
+const K="sp:"+(window.spUserNS||"")+page+":";
 const ld=k=>{try{return JSON.parse(localStorage.getItem(K+k)||"{}")}catch(e){return {}}};
-const sv=(k,v)=>{try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}};
+const sv=(k,v)=>{try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}window.spSyncChanged&&window.spSyncChanged();};
 const st={star:ld("star"),low:ld("low"),del:ld("del"),memo:ld("memo")};
 const secs=[...document.querySelectorAll("section.item")].filter(s=>!s.dataset.dup);
 const allSecs=[...document.querySelectorAll("section.item")];
@@ -224,6 +224,7 @@ allSecs.forEach(s=>{const k=keyOf(s);const h=s.querySelector("h2");if(!k||!h||h.
   else if(tt==="del"){st.del[k]=1;delete st.low[k];sv("del",st.del);sv("low",st.low);}
   render();});
  h.append(t);});
+window.spToolsReload=()=>{st.star=ld("star");st.low=ld("low");st.del=ld("del");st.memo=ld("memo");render();window.dispatchEvent(new Event("spstate"));};
 render();},0);});
 </script>
 </html>

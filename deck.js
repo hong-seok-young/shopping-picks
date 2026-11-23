@@ -86,6 +86,7 @@
 
     var openBtn = document.createElement('button'); openBtn.type = 'button'; openBtn.className = 'dk-open'; openBtn.textContent = '한 개씩 보기';
     document.body.appendChild(openBtn);
+    addEventListener('spstate', function () { if (!dk.hidden) rebuild(idx); });
 
     // chips
     function chip(label, on, fn, cls) {

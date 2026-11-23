@@ -96,15 +96,23 @@
   window.spOverlay = function (close) { history.pushState({ spo: 1 }, ''); stack.push(close); };
   window.spOverlayClosed = function () { if (stack.length) { stack.pop(); skip++; history.back(); } };
 
-  // exit guard on the first screen of the app
-  var entry = false;
-  if (standalone) {
+  // exit guard on the first screen. Chrome skips history entries added before the user has touched the page,
+  // so the guard is armed on the first tap (and again after each "press once more" warning).
+  var entry = false, mobile = /Android|iPhone|iPad|iPod/.test(ua);
+  if (standalone || mobile) {
     try {
       var e0 = sessionStorage.getItem('sp:entry');
       if (!e0) { sessionStorage.setItem('sp:entry', location.pathname); entry = true; } else entry = e0 === location.pathname;
     } catch (e) {}
-    if (entry && !(history.state && history.state.spg)) { history.replaceState({ spbase: 1 }, ''); history.pushState({ spg: 1 }, ''); }
   }
+  var armed = !!(history.state && history.state.spg);
+  function arm() {
+    if (!entry || armed) return;
+    armed = true;
+    if (!(history.state && history.state.spbase)) history.replaceState({ spbase: 1 }, '');
+    history.pushState({ spg: 1 }, '');
+  }
+  ['click', 'pointerup', 'touchend', 'keydown'].forEach(function (ev) { addEventListener(ev, arm, { capture: true, passive: true }); });
   var lastBack = 0;
   function toast(t) {
     var d = document.createElement('div');
@@ -116,10 +124,8 @@
     if (skip) { skip--; return; }
     if (stack.length) { var c = stack.pop(); c(); return; }
     if (entry && e.state && e.state.spbase) {
-      var now = Date.now();
-      if (now - lastBack < 2000) { history.back(); return; }
-      lastBack = now; toast('뒤로가기를 한 번 더 누르면 앱이 꺼져요');
-      history.pushState({ spg: 1 }, '');
+      // first press lands here: warn; the next press leaves the app (the guard is re-armed only by a tap)
+      armed = false; lastBack = Date.now(); toast('뒤로가기를 한 번 더 누르면 앱이 꺼져요');
     }
   });
 
