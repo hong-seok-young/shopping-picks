@@ -7,21 +7,21 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#d62828",
-  "theme_color": "#d62828",
+  "background_color": "#a3101f",
+  "theme_color": "#a3101f",
   "icons": [
     {
-      "src": "icons/i190-192.png",
+      "src": "icons/n190-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icons/i190-512.png",
+      "src": "icons/n190-512.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "icons/i190-maskable-512.png",
+      "src": "icons/n190-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
