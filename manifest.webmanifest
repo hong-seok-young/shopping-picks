@@ -1,17 +1,30 @@
 {
   "name": "190/98 쇼핑 조사",
-  "short_name": "쇼핑 조사",
+  "short_name": "190",
   "lang": "ko",
   "id": "./",
   "description": "190cm 98kg 무신사 쇼핑 조사",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#eef0f3",
-  "theme_color": "#2e3f6e",
+  "background_color": "#d62828",
+  "theme_color": "#d62828",
   "icons": [
-    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
-    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    {
+      "src": "icons/i190-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/i190-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/i190-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

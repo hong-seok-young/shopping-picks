@@ -26,6 +26,15 @@
   var auth = null;
   try { auth = JSON.parse(localStorage.getItem('sp:auth') || 'null'); } catch (e) {}
   window.spUser = auth && auth.name || '';
+  // no login, no content: hide the whole page until someone logs in
+  if (!auth) {
+    document.documentElement.classList.add('sp-locked');
+    var lk = document.createElement('style');
+    lk.textContent = 'html.sp-locked body>*:not(.splg){visibility:hidden!important}html.sp-locked .splg{background:var(--bg,#eef0f3)!important}';
+    document.head.appendChild(lk);
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(function () { if (window.spShowLogin) window.spShowLogin(); }, 0); });
+  }
+
   window.spUserNS = auth ? auth.name + ':' : '';
 
   // ---- server sync ----

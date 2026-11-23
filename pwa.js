@@ -71,7 +71,7 @@
     if (!force && !ios && !android) return;
     close(); style();
     var d = document.createElement('div'); d.className = 'pwa'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', '앱 설치 안내');
-    d.innerHTML = '<img src="icons/icon-192.png" alt=""><div class="t"><b>폰에 앱으로 설치</b><div class="s">홈 화면에 아이콘이 생기고 앱처럼 열려요.</div></div>' +
+    d.innerHTML = '<img src="icons/i190-192.png" alt=""><div class="t"><b>폰에 앱으로 설치</b><div class="s">홈 화면에 아이콘이 생기고 앱처럼 열려요.</div></div>' +
       '<button class="ok" type="button">설치</button><button class="x" type="button" aria-label="닫기">×</button>';
     document.body.appendChild(d);
     document.body.style.paddingBottom = (d.offsetHeight + 40) + 'px';
