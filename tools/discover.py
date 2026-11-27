@@ -43,7 +43,7 @@ CATS = {
     'coat': dict(page='coat.html', kw=['롱코트'], name=r'코트|coat', excl=r'더플|떡볶이|후드|hood|벨트|belt|로브|robe|하프|숏|트렌치|패딩|무스탕|퍼|레인', fit='coat', black=True),
     'pants': dict(page='pants.html', kw=['와이드 팬츠', '슬랙스', '데님 팬츠', '와이드 슬랙스', '치노 팬츠'], name=r'팬츠|pants|슬랙스|바지|데님|진\b|치노|카고|트라우저', excl=r'린넨|linen|쇼츠|반바지|shorts|하프|레깅스|버뮤다|조거 ?쇼츠|\d ?부', fit='pants'),
     'tee': dict(page='tees.html', kw=['반팔 티셔츠', '무지 반팔', '헤비 반팔', '피케 셔츠'], name=r'반팔|반소매|티셔츠|tee|숏 ?슬리브|하프 ?슬리브|피케|폴로|pk', excl=r'긴팔|롱 ?슬리브|셋업|크롭|나시|민소매|' + TOPS, fit='tee'),
-    'shoes': dict(page='shoes.html', kw=['로퍼', '더비 슈즈', '첼시 부츠', '스웨이드 로퍼', '스니커즈', '워커'], name=r'로퍼|loafer|더비|derby|옥스포드|oxford|부츠|boot|스니커즈|sneaker|운동화|워커|모카신|슈즈|shoes', excl=r'슬리퍼|샌들|slide|쪼리|키즈|여성|힐|레인', fit='shoes'),
+    'shoes': dict(page='shoes.html', kw=['로퍼', '더비 슈즈', '첼시 부츠', '가죽 로퍼', '스니커즈', '워커'], name=r'로퍼|loafer|더비|derby|옥스포드|oxford|부츠|boot|스니커즈|sneaker|운동화|워커|모카신|슈즈|shoes', excl=r'슬리퍼|샌들|slide|쪼리|키즈|여성|힐|레인|스웨이드|스웨드|suede|suade|세무|누벅|nubuck|벨루어', fit='shoes'),
     'gym': dict(page='gym.html', kw=GYM_BRANDS, name=r'.', excl=TOPS + r'|컴프레션|compression|레깅스|타이츠|카라|폴로|럭비|저지|jersey|셋업|vlad', fit='gym', brands=GYM_BRANDS),
 }
 
@@ -231,6 +231,8 @@ def cmd_fit():
         mat = (o.get('mat') or '')
         if cat == 'pants' and re.search(r'린넨|linen|마\s?\d|ramie|저마', mat, re.I):
             continue
+        if cat == 'shoes' and re.search(r'스웨이드|스웨드|suede|suade|세무|누벅|nubuck|벨루어|split', mat, re.I):
+            continue  # no suede / nubuck shoes (user, 2026-11-27)
         thick = (o.get('feel') or {}).get('두께', '')
         if CATS[cat].get('thick') and thick in ('얇음', '약간 얇음'):
             continue
